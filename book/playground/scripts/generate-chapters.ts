@@ -300,6 +300,40 @@ function readFilesRecursively(dir: string, basePath: string = ""): ChapterFile[]
   return files;
 }
 
+function toWebContainerFile(file: ChapterFile): ChapterFile {
+  if (file.path === "package.json") {
+    const pkg = JSON.parse(file.content);
+    pkg.scripts = {
+      ...pkg.scripts,
+      dev: "vite --host 0.0.0.0",
+      build: "tsc --noEmit && vite build",
+      preview: "vite preview --host 0.0.0.0",
+    };
+    for (const dependencies of [pkg.dependencies, pkg.devDependencies]) {
+      if (!dependencies) continue;
+      delete dependencies["vite-plus"];
+      delete dependencies.vite;
+    }
+    pkg.devDependencies = { ...pkg.devDependencies, vite: "^6.0.0" };
+    // WebContainer cannot load native addons; use Rollup's WASM implementation.
+    pkg.pnpm = {
+      ...pkg.pnpm,
+      overrides: { ...pkg.pnpm?.overrides, rollup: "npm:@rollup/wasm-node@^4.0.0" },
+      onlyBuiltDependencies: [...new Set([...(pkg.pnpm?.onlyBuiltDependencies ?? []), "esbuild"])],
+    };
+    return { ...file, content: JSON.stringify(pkg, null, 2) + "\n" };
+  }
+
+  if (/\.[jt]s$/.test(file.path)) {
+    return {
+      ...file,
+      content: file.content.replace(/(["'])vite-plus(\/client)?\1/g, "$1vite$2$1"),
+    };
+  }
+
+  return file;
+}
+
 function getChapterName(section: string, chapterDir: string): string {
   const key = `${section}/${chapterDir}`;
   const displayName = CHAPTER_DISPLAY_NAMES[key];
@@ -405,7 +439,7 @@ function loadChapters(): Chapter[] {
       });
 
       // Merge files
-      const allFiles = [...fixedPlaygroundFiles, ...packagesFiles];
+      const allFiles = [...fixedPlaygroundFiles, ...packagesFiles].map(toWebContainerFile);
 
       if (allFiles.length === 0) continue;
 
