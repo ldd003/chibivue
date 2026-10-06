@@ -1,0 +1,19 @@
+{
+  "name": "01_project_setup",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "license": "MIT",
+  "author": "ubugeeei <ubuge1122@gmail.com>",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cd examples/playground && vp install && vp run dev"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.28.6",
+    "magic-string": "^0.30.21"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2"
+  }
+}

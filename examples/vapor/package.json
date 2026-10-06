@@ -1,0 +1,14 @@
+{
+  "name": "@examples/vapor",
+  "version": "1.0.0",
+  "license": "MIT",
+  "author": "ubugeeei <ubuge1122@gmail.com>",
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev"
+  },
+  "devDependencies": {
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}

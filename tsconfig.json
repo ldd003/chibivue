@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["DOM", "ESNext"],
+    "strict": true,
+    "declaration": true,
+    "isolatedDeclarations": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "@chibivue/*": ["./impl/*/src"],
+      "chibivue": ["./impl/chibivue/src"],
+      "chibivue-store": ["./impl/@extensions/chibivue-store/src"],
+      "chibivue-router": ["./impl/@extensions/chibivue-router/src"],
+      "vite-plugin-chibivue": ["./impl/@extensions/vite-plugin-chibivue/src"]
+    }
+  },
+  "include": ["impl/**/*.ts", "examples/**/*.ts", "examples/**/*.vue"],
+  "exclude": ["**/node_modules", "**/dist", "examples/vuejs-core"]
+}

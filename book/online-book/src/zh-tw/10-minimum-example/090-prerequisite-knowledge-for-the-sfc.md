@@ -1,0 +1,222 @@
+## 相關知識
+
+<KawaikoNote variant="question" title="什麼是 SFC？">
+
+SFC 是 Vue 特有的格式，把 template、script 和 style 放在同一個檔案中。它以 `.vue` 檔案儲存，並由建置工具轉換為 JavaScript！
+
+</KawaikoNote>
+
+## SFC 是如何實作的？
+
+現在，讓我們最終開始支援單檔案元件（SFC）。\
+那麼，我們應該如何支援它呢？SFC 就像模板一樣，在開發期間使用，在執行時不存在。\
+對於那些已經完成模板開發的人來說，我認為這只是如何編譯它的簡單問題。
+
+你只需要將以下 SFC 程式碼：
+
+```vue
+<script>
+export default {
+  setup() {
+    const state = reactive({ message: 'Hello, chibivue!' })
+    const changeMessage = () => {
+      state.message += '!'
+    }
+
+    return { state, changeMessage }
+  },
+}
+</script>
+
+<template>
+  <div class="container" style="text-align: center">
+    <h2>message: {{ state.message }}</h2>
+    <img
+      width="150px"
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Vue.js_Logo_2.svg/1200px-Vue.js_Logo_2.svg.png"
+      alt="Vue.js Logo"
+    />
+    <p><b>chibivue</b> is the minimal Vue.js</p>
+
+    <button @click="changeMessage">click me!</button>
+  </div>
+</template>
+
+<style>
+.container {
+  height: 100vh;
+  padding: 16px;
+  background-color: #becdbe;
+  color: #2c3e50;
+}
+</style>
+```
+
+轉換為以下 JS 程式碼：
+
+```ts
+export default {
+  setup() {
+    const state = reactive({ message: 'Hello, chibivue!' })
+    const changeMessage = () => {
+      state.message += '!'
+    }
+
+    return { state, changeMessage }
+  },
+
+  render(_ctx) {
+    return h('div', { class: 'container', style: 'text-align: center' }, [
+      h('h2', `message: ${_ctx.state.message}`),
+      h('img', {
+        width: '150px',
+        src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Vue.js_Logo_2.svg/1200px-Vue.js_Logo_2.svg.png',
+      }),
+      h('p', [h('b', 'chibivue'), ' is the minimal Vue.js']),
+      h('button', { onClick: _ctx.changeMessage }, 'click me!'),
+    ])
+  },
+}
+```
+
+你可能會想知道樣式！但現在，讓我們忘記這一點，專注於模板和腳本。\
+我們不會在最小範例中涵蓋 `script setup`。
+
+## 我們應該何時以及如何編譯？
+
+總之，「我們在建置工具解析相依性時編譯」。
+在大多數情況下，SFC 從其他檔案匯入和使用。
+此時，我們編寫一個外掛程式，在解析 `.vue` 檔案時編譯它並將結果綁定到應用程式。
+
+```ts
+import App from './App.vue' // 匯入 App.vue 時編譯
+
+const app = createApp(App)
+app.mount('#app')
+```
+
+有各種建置工具，但這次讓我們嘗試為 Vite 編寫一個外掛程式。
+
+由於可能很少有人從未編寫過 Vite 外掛程式，讓我們首先透過一個簡單的範例程式碼熟悉外掛程式實作。讓我們現在建立一個簡單的 Vue 專案。
+
+```sh
+pwd # ~
+pnpm dlx create-vite
+## ✔ Project name: … plugin-sample
+## ✔ Select a framework: › Vue
+## ✔ Select a variant: › TypeScript
+
+cd plugin-sample
+ni
+```
+
+讓我們看看建立專案的 vite.config.ts 檔案。
+
+```ts
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [vue()],
+})
+```
+
+你可以看到它將 `@vitejs/plugin-vue` 加入到外掛程式中。
+實際上，當使用 Vite 建立 Vue 專案時，由於這個外掛程式，可以使用 SFC。
+這個外掛程式根據 Vite 外掛程式 API 實作 SFC 編譯器，並將 Vue 檔案編譯為 JS 檔案。
+讓我們嘗試在這個專案中建立一個簡單的外掛程式。
+
+```ts
+import { defineConfig, Plugin } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [vue(), myPlugin()],
+})
+
+function myPlugin(): Plugin {
+  return {
+    name: 'vite:my-plugin',
+
+    transform(code, id) {
+      if (id.endsWith('.sample.js')) {
+        let result = ''
+
+        for (let i = 0; i < 100; i++) {
+          result += `console.log("HelloWorld from plugin! (${i})");\n`
+        }
+
+        result += code
+
+        return { code: result }
+      }
+    },
+  }
+}
+```
+
+我建立了一個名為 `myPlugin` 的外掛程式。\
+由於它很簡單，我認為很多人不用解釋就能理解，但我還是會解釋一下以防萬一。
+
+外掛程式符合 Vite 要求的格式。\
+有各種選項，但由於這是一個簡單的範例，我只使用了 `transform` 選項。\
+我建議查看官方檔案和其他資源以取得更多資訊：https://vite.dev/guide/api-plugin
+
+在 `transform` 函式中，你可以接收 `code` 和 `id`。\
+你可以將 `code` 視為檔案的內容，將 `id` 視為檔案名。\
+作為回傳值，你將結果放在 `code` 屬性中。
+你可以根據 `id` 為每種檔案型別編寫不同的處理，或修改 `code` 來重寫檔案的內容。\
+在這種情況下，我為以 `*.sample.js` 結尾的檔案在檔案內容的開頭加入了 100 個主控台紀錄。\
+現在，讓我們實作一個範例 `plugin.sample.js` 並檢查它。
+
+```sh
+pwd # ~/plugin-sample
+touch src/plugin.sample.js
+```
+
+`~/plugin-sample/src/plugin.sample.js`
+
+```ts
+function fizzbuzz(n) {
+  for (let i = 1; i <= n; i++) {
+    i % 3 === 0 && i % 5 === 0
+      ? console.log('fizzbuzz')
+      : i % 3 === 0
+        ? console.log('fizz')
+        : i % 5 === 0
+          ? console.log('buzz')
+          : console.log(i)
+  }
+}
+
+fizzbuzz(Math.floor(Math.random() * 100) + 1)
+```
+
+`~/plugin-sample/src/main.ts`
+
+```ts
+import { createApp } from 'vue'
+import './style.css'
+import App from './App.vue'
+import './plugin.sample.js' // 加入
+
+createApp(App).mount('#app')
+```
+
+讓我們在瀏覽器中檢查它。
+
+```sh
+pwd # ~/plugin-sample
+pnpm dev
+```
+
+![Sample Vite plugin console output](/figures/10-minimum-example/sfc-prerequisites/sample-vite-plugin-console.png)
+
+![Sample Vite plugin transformed source](/figures/10-minimum-example/sfc-prerequisites/sample-vite-plugin-source.png)
+
+你可以看到原始碼已經被正確修改了。
+
+到此為止的原始碼：
+[chibivue (GitHub)](https://github.com/chibivue-land/chibivue/tree/main/book/impls/10_minimum_example/070_sfc_compiler)
