@@ -1,4 +1,5 @@
 import { createApp, h } from "./index.js";
+import { reactive } from "./reactivity/index.js";
 
 const app = createApp({
   setup() {

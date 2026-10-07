@@ -1,3 +1,5 @@
+import { ReactiveEffect } from "../reactivity/index.js";
+
 export function createAppAPI(render) {
   return function createApp(rootComponent) {
     const app = {
@@ -6,10 +8,11 @@ export function createAppAPI(render) {
 
         const updateComponent = () => {
           const vnode = componentRender();
-          console.log(100, vnode);
           render(vnode, rootContainer);
         };
-        updateComponent();
+
+        const effect = new ReactiveEffect(updateComponent);
+        effect.run();
       },
     };
     return app;

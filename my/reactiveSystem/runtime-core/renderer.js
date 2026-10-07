@@ -11,7 +11,6 @@ export function createRenderer(options) {
     const el = hostCreateElement(vnode.type);
 
     Object.entries(vnode.props).forEach(([key, value]) => {
-      console.log(99, key, value);
       hostPatchProp(el, key, value);
     });
 
@@ -23,6 +22,7 @@ export function createRenderer(options) {
   };
 
   const render = (vnode, container) => {
+    while (container.firstChild) container.removeChild(container.firstChild);
     const el = renderVNode(vnode);
     hostInsert(el, container);
   };
