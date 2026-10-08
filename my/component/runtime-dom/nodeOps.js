@@ -14,4 +14,7 @@ export const nodeOps = {
   insert: (child, parent, anchor) => {
     parent.insertBefore(child, anchor || null);
   },
+  parentNode: (node) => {
+    return node.parentNode;
+  },
 };
