@@ -1,6 +1,7 @@
 import { Text, normalizeVNode, createVNode } from "./vnode.js";
 import { ReactiveEffect } from "../reactivity/index.js";
 import { createComponentInstance } from "./component.js";
+import { initProps, updateProps } from "./componentProps.js";
 
 export function createRenderer(options) {
   const {
@@ -98,11 +99,16 @@ export function createRenderer(options) {
   };
 
   const mountComponent = (initialVNode, container) => {
+    // debugger;
     const instance = (initialVNode.component =
       createComponentInstance(initialVNode));
+
+    const { props } = instance.vnode;
+    initProps(instance, props);
+
     const component = initialVNode.type;
     if (component.setup) {
-      instance.render = component.setup();
+      instance.render = component.setup(instance.props);
     }
     setupRenderEffect(instance, initialVNode, container);
   };
@@ -123,6 +129,7 @@ export function createRenderer(options) {
           next.component = instance;
           instance.vnode = next;
           instance.next = null;
+          updateProps(instance, next.props);
         } else {
           next = vnode;
         }

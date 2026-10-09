@@ -4,10 +4,12 @@ export function createComponentInstance(vnode) {
     type,
     vnode,
     next: null,
-    effect: null,
     subTree: null,
-    update: null,
+    propsOptions: type.props || {},
+    props: {},
     render: null,
+    effect: null,
+    update: null,
     isMounted: false,
   };
   return instance;
