@@ -1,5 +1,5 @@
 import { reactive } from "../reactivity/index.js";
-import { camelize, hasOwn } from "../shared/general.js";
+import { camelize, hasOwn } from "../shared/index.js";
 
 export function initProps(instance, rawProps) {
   const props = {};

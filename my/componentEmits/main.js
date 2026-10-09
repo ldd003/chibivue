@@ -2,16 +2,20 @@ import { createApp, h } from "./index.js";
 import { reactive } from "./reactivity/index.js";
 
 const MyComponent = {
-  name: "MyComponent",
-  props: { someMessage: "" },
+  props: { someMessage: { type: String } },
 
-  setup(props) {
-    return () => h("div", { id: "my-app" }, [`message: ${props.someMessage}`]);
+  setup(props, { emit }) {
+    return () =>
+      h("div", {}, [
+        h("p", {}, [`someMessage: ${props.someMessage}`]),
+        h("button", { onClick: () => emit("click:change-message") }, [
+          "change message",
+        ]),
+      ]);
   },
 };
 
 const app = createApp({
-  name: "App",
   setup() {
     const state = reactive({ message: "hello" });
     const changeMessage = () => {
@@ -20,8 +24,14 @@ const app = createApp({
 
     return () =>
       h("div", { id: "my-app" }, [
-        h(MyComponent, { "some-message": state.message }, []),
-        h("button", { onClick: changeMessage }, ["change message"]),
+        h(
+          MyComponent,
+          {
+            "some-message": state.message,
+            "onClick:change-message": changeMessage,
+          },
+          [],
+        ),
       ]);
   },
 });

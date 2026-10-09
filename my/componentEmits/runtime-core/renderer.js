@@ -108,7 +108,9 @@ export function createRenderer(options) {
 
     const component = initialVNode.type;
     if (component.setup) {
-      instance.render = component.setup(instance.props);
+      instance.render = component.setup(instance.props, {
+        emit: instance.emit,
+      });
     }
     setupRenderEffect(instance, initialVNode, container);
   };
