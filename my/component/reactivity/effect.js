@@ -42,6 +42,7 @@ export function trigger(target, key) {
   if (dep) {
     const effects = [...dep];
     for (const effect of effects) {
+      debugger;
       effect.run();
     }
   }

@@ -104,6 +104,7 @@ export function createRenderer(options) {
     if (component.setup) {
       instance.render = component.setup();
     }
+    debugger;
     setupRenderEffect(instance, initialVNode, container);
   };
 
@@ -119,6 +120,7 @@ export function createRenderer(options) {
       } else {
         let { next, vnode } = instance;
         if (next) {
+          debugger;
           next.el = vnode.el;
           next.component = instance;
           instance.vnode = next;
@@ -135,12 +137,14 @@ export function createRenderer(options) {
         next.el = nextTree.el;
       }
     };
+    componentUpdateFn.types = initialVNode.type;
     const effect = (instance.effect = new ReactiveEffect(componentUpdateFn));
     const update = (instance.update = () => effect.run());
     update();
   };
 
   const updateComponent = (n1, n2) => {
+    debugger;
     const instance = (n2.component = n1.component);
     instance.next = n2;
     instance.update();
