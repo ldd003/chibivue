@@ -1,4 +1,5 @@
 import { emit } from "./componentEmits.js";
+import { initProps } from "./componentProps.js";
 
 let compile;
 
@@ -29,10 +30,17 @@ export function setupComponent(instance) {
   const { props } = instance.vnode;
   initProps(instance, props);
 
-  const component = initialVNode.type;
+  const component = instance.type;
   if (component.setup) {
     instance.render = component.setup(instance.props, {
       emit: instance.emit,
     });
+  }
+
+  if (compile && !component.render) {
+    const template = component.template ?? "";
+    if (template) {
+      instance.render = compile(template);
+    }
   }
 }
