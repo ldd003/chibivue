@@ -22,3 +22,5 @@ export const createApp = (...args) => {
 
   return app;
 };
+
+export * from "../runtime-core/index.js";

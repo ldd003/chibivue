@@ -48,5 +48,7 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "explicit"
   },
-  "oxc.enable": true
+  "oxc.enable": true,
+  "trae.tab.enableRename": false,
+  "trae.tab.enableAutoImport": false
 }

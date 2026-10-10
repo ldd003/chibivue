@@ -103,15 +103,16 @@ export function createRenderer(options) {
     const instance = (initialVNode.component =
       createComponentInstance(initialVNode));
 
-    const { props } = instance.vnode;
-    initProps(instance, props);
+    // const { props } = instance.vnode;
+    // initProps(instance, props);
 
-    const component = initialVNode.type;
-    if (component.setup) {
-      instance.render = component.setup(instance.props, {
-        emit: instance.emit,
-      });
-    }
+    // const component = initialVNode.type;
+    // if (component.setup) {
+    //   instance.render = component.setup(instance.props, {
+    //     emit: instance.emit,
+    //   });
+    // }
+    setupComponent(instance);
     setupRenderEffect(instance, initialVNode, container);
   };
 
