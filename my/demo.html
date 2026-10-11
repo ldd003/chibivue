@@ -7,14 +7,11 @@
   </head>
   <body>
     <script>
-      let s = new Set([33, 6, 99]);
-      for (const k of s) {
-        console.log(k);
-      }
+      let str = "hell";
+      let reg = /\d/;
 
-      let ele = document.createTextNode("hello");
-      console.log(ele, typeof ele);
-      console.dir(ele);
+      console.log(reg.exec(str));
+      console.log(reg.exec(str));
     </script>
   </body>
 </html>
