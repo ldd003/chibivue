@@ -1,13 +1,5 @@
-// export const generate = ({ tag, props, textContent }) => {
-//   return `return () => {
-//   const { h } = ChibiVue;
-//   return h("${tag}", { ${Object.entries(props)
-//     .map(([k, v]) => `${k}: "${v}"`)
-//     .join(", ")} }, ["${textContent}"]);
-// }`;
-// };
-
 import { NodeTypes } from "./ast.js";
+import { toHandlerKey } from "../shared/index.js";
 
 export const generate = ({ children }) => {
   return `
@@ -34,23 +26,28 @@ function genNode(node) {
   }
 }
 
-// function genElement(el) {
-//   return `h("${el.tag}",{${el.props.map(({ name, value }) => `${name}:${value}`).join(", ")}},[${el.children.map((it) => genNode(it)).join(", ")}])`;
-// }
-
-// function genText(node) {
-//   return `${node.content}`;
-// }
-
 const genElement = (el) => {
   return `h("${el.tag}", {${el.props
-    .map(({ name, value }) =>
-      // 如果是 @click，将 props 名称转换为 onClick
-      name === "@click"
-        ? `onClick: ${value?.content}`
-        : `${name}: "${value?.content}"`,
-    )
+    .map((prop) => genProp(prop))
     .join(", ")}}, [${el.children.map((it) => genNode(it)).join(", ")}])`;
+};
+
+const genProp = (prop) => {
+  switch (prop.type) {
+    case NodeTypes.ATTRIBUTE:
+      return `${prop.name}: "${prop.value?.content}"`;
+    case NodeTypes.DIRECTIVE: {
+      switch (prop.name) {
+        case "on":
+          return `${toHandlerKey(prop.arg)}: ${prop.exp}`;
+
+        default:
+          throw new Error(`unexpected directive name. got "${prop.name}"`);
+      }
+    }
+    default:
+      throw new Error(`unexpected prop type.`);
+  }
 };
 
 const genText = (text) => {
