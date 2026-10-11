@@ -1,28 +1,3 @@
-// export const baseParse = (content) => {
-//   const matched = content.match(/<(\w+)\s+([^>]*)>([^<]*)<\/\1>/);
-//   if (!matched)
-//     return {
-//       tag: "",
-//       props: "",
-//       textContent: "",
-//     };
-//   const [_, tag, attrs, textContent] = matched;
-//   const props = {};
-
-//   //'class="hello" style="color: red;"'.match(/(\w+)=['"]([^'"]+)['"]/g)
-//   //=>['class="hello"', 'style="color: red;"']
-//   attrs.replace(/(\w+)=['"]([^'"]+)['"]/g, (_, key, value) => {
-//     props[key] = value;
-//     return "";
-//   });
-
-//   return {
-//     tag,
-//     props,
-//     textContent,
-//   };
-// };
-
 import { NodeTypes } from "./ast.js";
 
 function createParserContext(content) {
@@ -49,8 +24,9 @@ function parseChildren(context, ancestors) {
   while (!isEnd(context, ancestors)) {
     const s = context.source;
     let node = undefined;
-
-    if (s[0] === "<") {
+    if (startsWith(s, "{{")) {
+      node = parseInterpolation(context);
+    } else if (s[0] === "<") {
       if (/[a-z]/i.test(s[1])) {
         node = parseElement(context, ancestors);
       }
@@ -106,11 +82,13 @@ function last(xs) {
 }
 
 function parseText(context) {
-  const endToken = "<";
+  const endTokens = ["<", "{{"];
   let endIndex = context.source.length;
-  const index = context.source.indexOf(endToken, 1);
-  if (index !== -1 && endIndex > index) {
-    endIndex = index;
+  for (let i = 0; i < endTokens.length; i++) {
+    const index = context.source.indexOf(endTokens[i], 1);
+    if (index !== -1 && endIndex > index) {
+      endIndex = index;
+    }
   }
 
   const start = getCursor(context);
@@ -264,6 +242,27 @@ function parseAttribute(context, nameSet) {
 
   const loc = getSelection(context, start);
 
+  if (/^(v-[A-Za-z0-9-]|@)/.test(name)) {
+    const match =
+      /(?:^v-([a-z0-9-]+))?(?:(?::|^\.|^@|^#)(\[[^\]]+\]|[^\.]+))?(.+)?$/i.exec(
+        name,
+      );
+
+    let dirName = match[1] || (startsWith(name, "@") ? "on" : "");
+
+    let arg = "";
+
+    if (match[2]) arg = match[2];
+
+    return {
+      type: NodeTypes.DIRECTIVE,
+      name: dirName,
+      exp: value?.content ?? "",
+      loc,
+      arg,
+    };
+  }
+
   return {
     type: NodeTypes.ATTRIBUTE,
     name,
@@ -300,6 +299,39 @@ function parseAttributeValue(context) {
     content = parseTextData(context, match[0].length);
   }
   return {
+    content,
+    loc: getSelection(context, start),
+  };
+}
+
+function parseInterpolation(context) {
+  const [open, close] = ["{{", "}}"];
+  const closeIndex = context.source.indexOf(close, open.length);
+  if (closeIndex === -1) return undefined;
+
+  const start = getCursor(context);
+  advanceBy(context, open.length);
+
+  const innerStart = getCursor(context);
+  const innerEnd = getCursor(context);
+  const rawContentLength = closeIndex - open.length;
+  const rawContent = context.source.slice(0, rawContentLength);
+  const preTrimContent = parseTextData(context, rawContentLength);
+
+  const content = preTrimContent.trim();
+
+  const startOffset = preTrimContent.indexOf(content);
+
+  if (startOffset > 0) {
+    advancePositionWithMutation(innerStart, rawContent, startOffset);
+  }
+  const endOffset =
+    rawContentLength - (preTrimContent.length - content.length - startOffset);
+  advancePositionWithMutation(innerEnd, rawContent, endOffset);
+  advanceBy(context, close.length);
+
+  return {
+    type: NodeTypes.INTERPOLATION,
     content,
     loc: getSelection(context, start),
   };
